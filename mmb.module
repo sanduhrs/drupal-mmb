@@ -52,7 +52,8 @@ function mmb_mailhandler($node,$handle,$mail_nr,$mailheader,$boxdata) {
  *
  */
 function mmb_get_part($stream, $msg_number, $mime_type, $structure = false, $part_number = false) {
-
+  global $mime_types;
+  
   if (!$structure) {
     $structure = imap_fetchstructure($stream, $msg_number);
     // drupal_set_message(print_r($structure,1)); //DEBUG
@@ -77,7 +78,7 @@ function mmb_get_part($stream, $msg_number, $mime_type, $structure = false, $par
        * return an array containing the two parts
        */
 
-      if ($mime_type == 'IMAGE/PNG' OR $mime_type == 'IMAGE/GIF' OR $mime_type == 'IMAGE/JPEG' OR $mime_type == 'IMAGE/TIFF') {
+      if (in_array($mime_type,$mime_types['images'])) {
         $img = mmb_get_attachment($structure, $text);
         return $img;
       }
