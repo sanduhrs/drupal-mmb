@@ -7,13 +7,18 @@
  * This module is alpha and inadequately tested, don't use it in a production environment.
  */
 
+define('MMB_PATH', drupal_get_path('module', 'mmb'));
+include_once(MMB_PATH.'/mmb_mime_types.inc');
+
 /**
  * Implementation of hook_help().
  */
 function mmb_help($section) {
   switch ($section) {
     case 'admin/modules#description':
-      return t('Posting media via e-mail or by mobile phone Depends: mailhandler image.');
+      if (!module_exist('image')) drupal_set_message('Mobile Media Blog depends on image.module.');
+      if (!module_exist('mailhandler')) drupal_set_message('Mobile Media Blog depends on mailhandler.module.');
+      return t('Posting media via e-mail or by mobile phone. Depends: image, mailhandler.');
   }
 }
 
@@ -22,12 +27,18 @@ function mmb_help($section) {
  * Implementation of hook_mailhandler().
  */
 function mmb_mailhandler($node,$handle,$mail_nr,$mailheader,$boxdata) {
+  global $mime_types;
+
   // Process images only if image.module is installed
   if (module_exist('image')) {
-    // process jpeg
-    if ($jpeg = mmb_get_part($handle, $mail_nr, 'IMAGE/JPEG')) {
-      mmb_process_jpeg (&$node, $jpeg);
+
+    // Process images
+    for ($i=0;$i<=count($mime_types['images']);$i++) {
+      if ($img = mmb_get_part($handle, $mail_nr, $mime_types['images'][$i])) {
+        mmb_process_img (&$node, $img, $mime_types['images'][$i]);
+      }
     }
+
   }
   return $node;
 }
@@ -44,7 +55,7 @@ function mmb_get_part($stream, $msg_number, $mime_type, $structure = false, $par
 
   if (!$structure) {
     $structure = imap_fetchstructure($stream, $msg_number);
-    //drupal_set_message(print_r($structure,1)); //DEBUG
+    // drupal_set_message(print_r($structure,1)); //DEBUG
   }
   if ($structure) {
     foreach ($structure->parameters as $parameter) {
@@ -60,18 +71,18 @@ function mmb_get_part($stream, $msg_number, $mime_type, $structure = false, $par
       $text = imap_fetchbody($stream, $msg_number, $part_number);
 
       /**
-       * My modification to extract jpegs
+       * My modification to extract images
        * If the requested part was type IMAGE/JPEG and it was found
        * then retrieve the filename and decode the binary
        * return an array containing the two parts
        */
 
-      if ($mime_type == 'IMAGE/JPEG') {
-        $jpeg = mmb_get_attachment( $structure, $text );
-        return $jpeg;
+      if ($mime_type == 'IMAGE/PNG' OR $mime_type == 'IMAGE/GIF' OR $mime_type == 'IMAGE/JPEG' OR $mime_type == 'IMAGE/TIFF') {
+        $img = mmb_get_attachment($structure, $text);
+        return $img;
       }
 
-/*      if ($structure->encoding == 3) {
+      if ($structure->encoding == 3) {
         return drupal_convert_to_utf8(imap_base64($text), $encoding);
       }
       else if ($structure->encoding == 4) {
@@ -80,7 +91,7 @@ function mmb_get_part($stream, $msg_number, $mime_type, $structure = false, $par
       else {
         return drupal_convert_to_utf8($text, $encoding);
       }
-*/
+
     }
     if ($structure->type == 1) { /* multipart */
       while (list($index, $sub_structure) = each ($structure->parts)) {
@@ -107,21 +118,21 @@ function mmb_get_part($stream, $msg_number, $mime_type, $structure = false, $par
  * If $node->file is empty at the end then validation failed so revert type
  */
  
-function mmb_process_jpeg (&$node, $jpeg) {
+function mmb_process_img (&$node, $img, $mime_type) {
 
   // if $jpeg is empty there is nothing to do so return
-  if ( !$jpeg ) return;
+  if ( !$img ) return;
   // we can only process jpegs if image.module is available
   if ( module_exist('image') ) {
     // save the file to temporary location
-    if ( $tmp_file = mmb_temp_save_attachment($jpeg['binary']) ) {
+    if ( $tmp_file = mmb_temp_save_attachment($img['binary'], $mime_type) ) {
       // create an object for passing to image.module via image_validate
       $file = new StdClass();
-      $file->filename = $jpeg['filename'];
-      $file->filemime = 'image/jpeg';
+      $file->filename = $img['filename'];
+      $file->filemime = $mime_type;
       $file->filepath = $tmp_file;
       $file->error = 0;
-      $file->filesize = strlen($jpeg['binary']);
+      $file->filesize = strlen($img['binary']);
       $file->source = 'image';
 
       // change to image node type
@@ -202,10 +213,10 @@ return $filename;
  * Returns the filename that was assigned if successful
  */
 
-function mmb_temp_save_attachment($binary) {
+function mmb_temp_save_attachment($binary, $mime_type) {
 
   $temp = variable_get('file_directory_temp',FILE_DIRECTORY_TEMP);
-  $tmp_filename = tempnam($temp,'mmb_').'.jpg';
+  $tmp_filename = tempnam($temp,'mmb_').'.'.strtolower(str_replace('IMAGE/','',$mime_type));
 
   if (!$handle = fopen($tmp_filename, 'wb')) {
     watchdog('error', t('mmb could not create file for attachment.'));
@@ -229,3 +240,5 @@ function mmb_get_mime_type(&$structure) {
   }
   return 'TEXT/PLAIN';
 }
+
+?>

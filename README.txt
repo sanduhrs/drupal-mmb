@@ -1,10 +1,15 @@
+// $Id$
+
 Mobile Media Blog - mmb.module
 ------------------------------
 
 Mobile Media Blog allows you to post media via e-mail or mobile phone.
 This module is alpha and inadequately tested, don't use it in a production environment.
 
-Please, send bug reports, feature requests, or other comments to me:
+For bug reports, feature requests and/or similar use the issue tracker:
+http://drupal.org/project/issues/mmb
+
+Send comments to:
 Stefan Auditor <sanduhrs@audiens.de>
 
 /* Depends */
@@ -24,7 +29,9 @@ Stefan Auditor <sanduhrs@audiens.de>
 - process multiple attachments
 
 /* Credits */
-Based on the modification of mailhandler.module for Drupal4.6 as seen on http://www.stuartandnicola.com/node/339 code by Stuart Greenfield www.stuartandnicola.com
+Based on the modification of mailhandler.module for Drupal4.6 as seen on http://www.stuartandnicola.com/node/339 by Stuart Greenfield www.stuartandnicola.com
 
 /* Changelog */
-17.04.2006: alpha release
+17.04.2006:	added support for gif, png
+			checks for image.module, mailhandler.module
+17.04.2006:	alpha release
