@@ -1,0 +1,231 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Mobile Media Blog allows you to post media via e-mail or mobile phone.
+ * This module is alpha and inadequately tested, don't use it in a production environment.
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function mmb_help($section) {
+  switch ($section) {
+    case 'admin/modules#description':
+      return t('Posting media via e-mail or by mobile phone Depends: mailhandler image.');
+  }
+}
+
+
+/**
+ * Implementation of hook_mailhandler().
+ */
+function mmb_mailhandler($node,$handle,$mail_nr,$mailheader,$boxdata) {
+  // Process images only if image.module is installed
+  if (module_exist('image')) {
+    // process jpeg
+    if ($jpeg = mmb_get_part($handle, $mail_nr, 'IMAGE/JPEG')) {
+      mmb_process_jpeg (&$node, $jpeg);
+    }
+  }
+  return $node;
+}
+
+/**
+ * Returns the first part with the specified mime_type
+ *
+ * USAGE EXAMPLES - from php manual: imap_fetch_structure() comments
+ * $data = get_part($stream, $msg_number, "TEXT/PLAIN"); // get plain text
+ * $data = get_part($stream, $msg_number, "TEXT/HTML"); // get HTML text
+ *
+ */
+function mmb_get_part($stream, $msg_number, $mime_type, $structure = false, $part_number = false) {
+
+  if (!$structure) {
+    $structure = imap_fetchstructure($stream, $msg_number);
+    //drupal_set_message(print_r($structure,1)); //DEBUG
+  }
+  if ($structure) {
+    foreach ($structure->parameters as $parameter) {
+      if (strtoupper($parameter->attribute) == 'CHARSET') {
+        $encoding = $parameter->value;
+      }
+    }
+    if ($mime_type == mmb_get_mime_type($structure)) {
+
+      if (!$part_number) {
+        $part_number = "1";
+      }
+      $text = imap_fetchbody($stream, $msg_number, $part_number);
+
+      /**
+       * My modification to extract jpegs
+       * If the requested part was type IMAGE/JPEG and it was found
+       * then retrieve the filename and decode the binary
+       * return an array containing the two parts
+       */
+
+      if ($mime_type == 'IMAGE/JPEG') {
+        $jpeg = mmb_get_attachment( $structure, $text );
+        return $jpeg;
+      }
+
+/*      if ($structure->encoding == 3) {
+        return drupal_convert_to_utf8(imap_base64($text), $encoding);
+      }
+      else if ($structure->encoding == 4) {
+        return drupal_convert_to_utf8(quoted_printable_decode($text), $encoding);
+      }
+      else {
+        return drupal_convert_to_utf8($text, $encoding);
+      }
+*/
+    }
+    if ($structure->type == 1) { /* multipart */
+      while (list($index, $sub_structure) = each ($structure->parts)) {
+        if ($part_number) {
+          $prefix = $part_number. '.';
+        }
+        $data = mmb_get_part($stream, $msg_number, $mime_type, $sub_structure, $prefix . ($index + 1));
+        if ($data) {
+          return $data;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+
+/**
+ * Supply an array, $jpeg, containing ['filename'] and ['binary']
+ * Save a temporary copy and if successful create an object containing its parts
+ * Change the node type to image, and pass the object to image_validate
+ * Although not uploaded from a form image_validate will process this object
+ * and generate the derivative images
+ * If $node->file is empty at the end then validation failed so revert type
+ */
+ 
+function mmb_process_jpeg (&$node, $jpeg) {
+
+  // if $jpeg is empty there is nothing to do so return
+  if ( !$jpeg ) return;
+  // we can only process jpegs if image.module is available
+  if ( module_exist('image') ) {
+    // save the file to temporary location
+    if ( $tmp_file = mmb_temp_save_attachment($jpeg['binary']) ) {
+      // create an object for passing to image.module via image_validate
+      $file = new StdClass();
+      $file->filename = $jpeg['filename'];
+      $file->filemime = 'image/jpeg';
+      $file->filepath = $tmp_file;
+      $file->error = 0;
+      $file->filesize = strlen($jpeg['binary']);
+      $file->source = 'image';
+
+      // change to image node type
+      $original_type = $node->type;
+      $node->type = 'image';
+
+      // generate thumbnails from the attached file by validating
+      //image_validate($node, $file); // this function doesn't exist anymore
+      image_prepare(&$node, $file);
+
+
+      // if $node->file is still empty then validation failed so revert type
+      if ( !$node->images ) {
+        watchdog('error',t('mmb attached file %file was not a jpeg',array('%file' => $file->filename)));
+        $node->type = $original_type;
+      }
+    }
+  }
+  else {
+    watchdog('error',t('mmb needs image.module to process jpegs'));
+  }
+}
+
+
+/**
+ * Extract the attachment from a message part - supply structure and binary
+ * Retrieve the filename and decode the binary
+ * Return an array containing the two parts
+ */
+
+function mmb_get_attachment($structure,$binary) {
+
+  // get filename out of the structure
+  $filename = mmb_get_attachment_name($structure);
+
+  //decode if base64
+  if ($structure->encoding==3) $binary = base64_decode($binary);
+  //decode if quoted printable
+  if ($structure->encoding==4) $binary = quoted_printable_decode($binary);
+
+  // return array
+  return array('filename' => $filename, 'binary' => $binary);
+}
+
+
+/**
+ * Extract the filename from a supplied mail structure
+ * Look in dparameters first, parameters second
+ * Returns the filename that was found
+ * Code adapted from http://uk2.php.net/manual/en/function.imap-fetchstructure.php
+ */
+
+function mmb_get_attachment_name($structure) {
+
+  // see if there are any dparameters present in this part
+  if (count($structure->dparameters)>0) {
+    foreach ($structure->dparameters as $dparam) {
+      if ((strtoupper($dparam->attribute)=='NAME') ||(strtoupper($dparam->attribute)=='FILENAME')) $filename=$dparam->value;
+    }
+  }
+  //if no filename found look in parameters
+  if ($filename==''){
+    // if there are any parameters present in this part
+    if (count($structure->parameters)>0){
+      foreach ($structure->parameters as $param){
+        if ((strtoupper($param->attribute)=='NAME') ||(strtoupper($param->attribute)=='FILENAME')) $filename=$param->value;
+      }
+    }
+  }
+
+return $filename;
+
+}
+
+
+/**
+ * Saves a binary in to the temporary folder
+ * Returns the filename that was assigned if successful
+ */
+
+function mmb_temp_save_attachment($binary) {
+
+  $temp = variable_get('file_directory_temp',FILE_DIRECTORY_TEMP);
+  $tmp_filename = tempnam($temp,'mmb_').'.jpg';
+
+  if (!$handle = fopen($tmp_filename, 'wb')) {
+    watchdog('error', t('mmb could not create file for attachment.'));
+     return FALSE;
+  }
+  else {
+    fwrite($handle, $binary);
+    fclose($handle);
+    return $tmp_filename;
+  }
+}
+
+/**
+ * Retrieve MIME type of the message structure.
+ */
+function mmb_get_mime_type(&$structure) {
+  static $primary_mime_type = array('TEXT', 'MULTIPART', 'MESSAGE', 'APPLICATION', 'AUDIO', 'IMAGE', 'VIDEO', 'OTHER');
+  $type_id = (int)$structure->type;
+  if (isset($primary_mime_type[$type_id]) && !empty($structure->subtype)) {
+    return $primary_mime_type[$type_id] .'/'. $structure->subtype;
+  }
+  return 'TEXT/PLAIN';
+}
