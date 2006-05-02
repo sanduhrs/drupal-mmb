@@ -2,11 +2,10 @@
 // $Id$
 
 /**
- * @file
+ * @mmb.module
  * Mobile Media Blog allows you to post media via e-mail or mobile phone.
  * This module is alpha and inadequately tested, don't use it in a production environment.
  */
-
 define('MMB_PATH', drupal_get_path('module', 'mmb'));
 include_once(MMB_PATH.'/mmb_mime_types.inc');
 
@@ -21,7 +20,6 @@ function mmb_help($section) {
       return t('Posting media via e-mail or by mobile phone. Depends: image, mailhandler.');
   }
 }
-
 
 /**
  * Implementation of hook_mailhandler().
@@ -109,7 +107,6 @@ function mmb_get_part($stream, $msg_number, $mime_type, $structure = false, $par
   return false;
 }
 
-
 /**
  * Supply an array, $jpeg, containing ['filename'] and ['binary']
  * Save a temporary copy and if successful create an object containing its parts
@@ -118,7 +115,6 @@ function mmb_get_part($stream, $msg_number, $mime_type, $structure = false, $par
  * and generate the derivative images
  * If $node->file is empty at the end then validation failed so revert type
  */
- 
 function mmb_process_img (&$node, $img, $mime_type) {
 
   // if $jpeg is empty there is nothing to do so return
@@ -157,13 +153,11 @@ function mmb_process_img (&$node, $img, $mime_type) {
   }
 }
 
-
 /**
  * Extract the attachment from a message part - supply structure and binary
  * Retrieve the filename and decode the binary
  * Return an array containing the two parts
  */
-
 function mmb_get_attachment($structure,$binary) {
 
   // get filename out of the structure
@@ -178,14 +172,12 @@ function mmb_get_attachment($structure,$binary) {
   return array('filename' => $filename, 'binary' => $binary);
 }
 
-
 /**
  * Extract the filename from a supplied mail structure
  * Look in dparameters first, parameters second
  * Returns the filename that was found
  * Code adapted from http://uk2.php.net/manual/en/function.imap-fetchstructure.php
  */
-
 function mmb_get_attachment_name($structure) {
 
   // see if there are any dparameters present in this part
@@ -208,12 +200,10 @@ return $filename;
 
 }
 
-
 /**
  * Saves a binary in to the temporary folder
  * Returns the filename that was assigned if successful
  */
-
 function mmb_temp_save_attachment($binary, $mime_type) {
 
   $temp = variable_get('file_directory_temp',FILE_DIRECTORY_TEMP);
