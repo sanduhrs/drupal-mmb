@@ -11,6 +11,8 @@ INSTALL
 
 4. Go to Administer->Modules (?q=admin/modules), and enable the mmb.module
 
+5. Optional: Use inline.module to display attached files inline http://drupal.org/project/inline
+
 Comments and suggestions to
 Stefan Auditor <stefan.auditor@erdfisch.de>
 
