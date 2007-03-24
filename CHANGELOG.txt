@@ -1,0 +1,25 @@
+/* $Id$ */
+
+CHANGELOG
+---------
+
+mmb.module - March, 24th 2007
+--------------------------------------
+- Drupal 5 compatibility update.
+
+mmb.module - March, 23th 2007
+--------------------------------------
+- Support for all filetypes allowed through upload.module
+- Uses upload.module to save the attached files
+
+mmb.module - April, 17th 2006
+--------------------------------------
+- added support for gif, png.
+- checks for image.module, mailhandler.module
+
+mmb.module - April, 17th 2006
+--------------------------------------
+- initial release.
+
+Comments and suggestions to
+Stefan Auditor <stefan.auditor@erdfisch.de>
