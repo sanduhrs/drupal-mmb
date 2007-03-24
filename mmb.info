@@ -1,0 +1,6 @@
+; $Id $
+name = "Mobile Media Blog"
+description = "Allows you to post media via e-mail or mobile phone (sms2mail)."
+dependencies = mailhandler upload
+;package = ""
+version = "$Name$"

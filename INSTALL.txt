@@ -1,0 +1,18 @@
+/* $Id$ */
+
+INSTALL
+-------
+
+1. Go to Administer->Modules (?q=admin/modules), and enable the upload.module
+
+2. Install and setup mailhandler.module http://drupal.org/project/mailhandler
+
+3. Copy the mmb.module to the Drupal modules directory.
+
+4. Go to Administer->Modules (?q=admin/modules), and enable the mmb.module
+
+Comments and suggestions to
+Stefan Auditor <stefan.auditor@erdfisch.de>
+
+Please report any bugs on
+http://drupal.org/project/issues/mmb

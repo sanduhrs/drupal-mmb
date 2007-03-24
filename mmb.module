@@ -1,0 +1,184 @@
+<?php
+/* $Id$ */
+
+/**
+ * @file
+ * Mobile Media Blog allows you to post media via e-mail or mobile phone.
+ *
+ * @author
+ * Stefan Auditor <stefan.auditor@erdfisch.de>
+ * for erdfisch :: internetlösungen http://erdfisch.de 
+ *
+ * TODO:
+ * - Setting to attach images using image_attach.module
+ * - Setting to create nodes instead of attachments if applicable (image,audio,video)
+ * - Patch inline.module to display filetypes other than image inline ;)
+ */
+
+/**
+ * Implementation of hook_mailhandler().
+ */
+function mmb_mailhandler($node, $result, $i, $header, $mailbox) {
+  //Get e-mail attachments
+  $files = array();
+  mmb_get_parts($files, $result, $i, $structure = false, $part_number = false);
+  
+  //Attach them to the node
+  $node->files = $files;
+  
+  //Save the attachments
+  _mmb_validate(&$node);
+  
+  return $node;
+}
+
+/**
+ * Helper function to save a file temporarily
+ */
+function mmb_save_part($data) {
+  $tmp_file = tempnam(file_directory_temp(), 'mmb_');
+  $file = file_save_data($data, $tmp_file);
+  
+  return $file;
+}
+
+/**
+ * Get all parts of the e-mail an save the attachments
+ */
+function mmb_get_parts(&$files, $stream, $msg_number, $mime_type, $structure = false, $part_number = false) {
+  $mimetypes = array ('text', 'multipart', 'message', 'application', 'audio', 'image', 'video', 'other');
+  
+  if (!$structure) {
+    $structure = imap_fetchstructure($stream, $msg_number);
+  }
+  if ($structure) {
+    foreach ($structure->parameters as $parameter) {
+      
+      if (strtoupper($parameter->attribute) == 'CHARSET') {
+        $encoding = $parameter->value;
+      }
+    }
+    
+    if (!$part_number) {
+      $part_number = '1';
+    }
+    
+    $index = explode('.', $part_number);
+    $data = imap_fetchbody($stream, $msg_number, $index[1]);
+    
+    if ($structure->encoding == 3) {
+      $data = base64_decode($data);
+    }
+    else if ($structure->encoding == 4) {
+      $data = quoted_printable_decode($data);
+    }
+    else {
+      $data = $data;
+    }
+    
+    if ($structure->dparameters[0]->attribute == 'filename' AND $structure->dparameters[0]->value != '') {
+      $key = 'upload_'.(count($files)+1);
+      $files[$key]['fid']       = $key;
+      $files[$key]['source']    = $key;
+      $files[$key]['filename']  = $structure->dparameters[0]->value;
+      $files[$key]['filepath']  = mmb_save_part($data);
+      $files[$key]['filemime']  = $mimetypes[$structure->type] .'/'. strtolower($structure->subtype);
+      $files[$key]['filesize']  = strlen($data);
+      $files[$key]['list']      = 1;
+    }
+    
+    if ($structure->type == 1) { /* multipart */
+      while (list($index, $sub_structure) = each ($structure->parts)) {
+        if ($part_number) {
+          $prefix = $part_number .'.';
+        }
+        mmb_get_parts(&$files, $stream, $msg_number, $mime_type, $sub_structure, $prefix . ($index + 1));
+      }
+    }
+  }
+
+  return;
+}
+
+/**
+ * From upload.module
+ * Changed from form_set_error- to watchdog-messages
+ */
+function _mmb_validate(&$node) {
+  // Accumulator for disk space quotas.
+  $filesize = 0;
+
+  // Check if node->files exists, and if it contains something.
+  if (is_array($node->files)) {
+    // Update existing files with form data.
+    foreach($node->files as $fid => $file) {
+      // Convert file to object for compatibility
+      $file = (object)$file;
+
+      // Validate new uploads.
+      if (strpos($fid, 'upload') !== false && !$file->remove) {
+        global $user;
+
+        // Bypass validation for uid  = 1.
+        if ($user->uid != 1) {
+          // Update filesize accumulator.
+          $filesize += $file->filesize;
+
+          // Validate file against all users roles.
+          // Only denies an upload when all roles prevent it.
+
+          $total_usersize = upload_space_used($user->uid) + $filesize;
+          $error = array();
+          foreach ($user->roles as $rid => $name) {
+            $extensions = variable_get("upload_extensions_$rid", 'jpg jpeg gif png txt html doc xls pdf ppt pps odt ods odp');
+            $uploadsize = variable_get("upload_uploadsize_$rid", 1) * 1024 * 1024;
+            $usersize = variable_get("upload_usersize_$rid", 10) * 1024 * 1024;
+
+            $regex = '/\.('. ereg_replace(' +', '|', preg_quote($extensions)) .')$/i';
+
+            if (!preg_match($regex, $file->filename)) {
+              $error['extension']++;
+            }
+
+            if ($uploadsize && $file->filesize > $uploadsize) {
+              $error['uploadsize']++;
+            }
+
+            if ($usersize && $total_usersize + $file->filesize > $usersize) {
+              $error['usersize']++;
+            }
+          }
+
+          $user_roles = count($user->roles);
+          $valid = TRUE;
+          if ($error['extension'] == $user_roles) {
+            // form_set_error('upload', t('The selected file %name can not be attached to this post, because it is only possible to attach files with the following extensions: %files-allowed.', array('%name' => $file->filename, '%files-allowed' => $extensions)));
+            watchdog('mmb', t('The selected file %name can not be attached to this post, because it is only possible to attach files with the following extensions: %files-allowed.', array('%name' => theme('placeholder', $file->filename), '%files-allowed' => theme('placeholder', $extensions))));
+            $valid = FALSE;
+          }
+          elseif ($error['uploadsize'] == $user_roles) {
+            // form_set_error('upload', t('The selected file %name can not be attached to this post, because it exceeded the maximum filesize of %maxsize.', array('%name' => $file->filename, '%maxsize' => format_size($uploadsize))));
+            watchdog('mmb', t('The selected file %name can not be attached to this post, because it exceeded the maximum filesize of %maxsize.', array('%name' => theme('placeholder', $file->filename), '%maxsize' => theme('placeholder', format_size($uploadsize)))));
+            $valid = FALSE;
+          }
+          elseif ($error['usersize'] == $user_roles) {
+            // form_set_error('upload', t('The selected file %name can not be attached to this post, because the disk quota of %quota has been reached.', array('%name' => $file->filename, '%quota' => format_size($usersize))));
+            watchdog('mmb', t('The selected file %name can not be attached to this post, because the disk quota of %quota has been reached.', array('%name' => theme('placeholder', $file->filename), '%quota' => theme('placeholder', format_size($usersize)))));
+            $valid = FALSE;
+          }
+          elseif (strlen($file->filename) > 255) {
+            // form_set_error('upload', t('The selected file %name can not be attached to this post, because the filename is too long.', array('%name' => $file->filename)));
+            watchdog('mmb', t('The selected file %name can not be attached to this post, because the filename is too long.', array('%name' => theme('placeholder', $file->filename))));
+            $valid = FALSE;
+          }
+
+          if (!$valid) {
+            unset($node->files[$fid], $_SESSION['file_previews'][$fid]);
+            file_delete($file->filepath);
+          }
+        }
+      }
+    }
+  }
+}
+
