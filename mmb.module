@@ -46,7 +46,7 @@ function mmb_save_part($data) {
  * Get all parts of the e-mail an save the attachments
  */
 function mmb_get_parts(&$files, $stream, $msg_number, $mime_type, $structure = false, $part_number = false) {
-  $mimetypes = array ('text', 'multipart', 'message', 'application', 'audio', 'image', 'video', 'other');
+  $mimetypes = array('text', 'multipart', 'message', 'application', 'audio', 'image', 'video', 'other');
   
   if (!$structure) {
     $structure = imap_fetchstructure($stream, $msg_number);
@@ -77,7 +77,7 @@ function mmb_get_parts(&$files, $stream, $msg_number, $mime_type, $structure = f
     }
     
     if ($structure->dparameters[0]->attribute == 'filename' AND $structure->dparameters[0]->value != '') {
-      $key = 'upload_'.(count($files)+1);
+      $key = 'upload_'. (count($files)+1);
       $files[$key]['fid']       = $key;
       $files[$key]['source']    = $key;
       $files[$key]['filename']  = $structure->dparameters[0]->value;
@@ -111,7 +111,7 @@ function _mmb_validate(&$node) {
   // Check if node->files exists, and if it contains something.
   if (is_array($node->files)) {
     // Update existing files with form data.
-    foreach($node->files as $fid => $file) {
+    foreach ($node->files as $fid => $file) {
       // Convert file to object for compatibility
       $file = (object)$file;
 
