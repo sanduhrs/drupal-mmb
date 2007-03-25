@@ -84,13 +84,13 @@ function mmb_get_parts(&$files, $stream, $msg_number, $mime_type, $structure = f
       $data = $data;
     }
     
-    if ($structure->dparameters[0]->attribute == 'filename' AND $structure->dparameters[0]->value != '') {
+    if (strtolower($structure->dparameters[0]->attribute) == 'filename' AND $structure->dparameters[0]->value != '') {
       $key = 'upload_'. (count($files)+1);
       $files[$key]['fid']       = $key;
       $files[$key]['source']    = $key;
-      $files[$key]['filename']  = $structure->dparameters[0]->value;
+      $files[$key]['filename']  = strtolower($structure->dparameters[0]->value);
       $files[$key]['filepath']  = mmb_save_part($data);
-      $files[$key]['filemime']  = $mimetypes[$structure->type] .'/'. strtolower($structure->subtype);
+      $files[$key]['filemime']  = $mimetypes[strtolower($structure->type)] .'/'. strtolower($structure->subtype);
       $files[$key]['filesize']  = strlen($data);
       $files[$key]['list']      = variable_get('upload_list_default', 1);
     }
