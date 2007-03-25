@@ -35,7 +35,7 @@ function mmb_mailhandler($node, $result, $i, $header, $mailbox) {
   $node->files = $files;
   
   //Save the attachments
-  _mmb_validate(&$node);
+  _mmb_validate($node);
   
   return $node;
 }
