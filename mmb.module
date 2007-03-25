@@ -13,6 +13,7 @@
  * - Setting to attach images using image_attach.module
  * - Setting to create nodes instead of attachments if applicable (image,audio,video)
  * - Patch inline.module to display filetypes other than image inline ;)
+ *   (this seems to be a bigger problem than I thought by now http://drupal.org/node/35709)
  */
 
 /**
