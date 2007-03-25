@@ -19,6 +19,14 @@
  * Implementation of hook_mailhandler().
  */
 function mmb_mailhandler($node, $result, $i, $header, $mailbox) {
+  global $user;
+  
+  //Check if user is allowed to upload files
+  if (!user_access('upload files')) {
+    watchdog('error', t("The user '%u' may not upload files.", array('%u' => $user->name ? $user->name : variable_get('anonymous', t('Anonymous')))));
+    return $node;
+  }
+  
   //Get e-mail attachments
   $files = array();
   mmb_get_parts($files, $result, $i, $structure = false, $part_number = false);
@@ -84,7 +92,7 @@ function mmb_get_parts(&$files, $stream, $msg_number, $mime_type, $structure = f
       $files[$key]['filepath']  = mmb_save_part($data);
       $files[$key]['filemime']  = $mimetypes[$structure->type] .'/'. strtolower($structure->subtype);
       $files[$key]['filesize']  = strlen($data);
-      $files[$key]['list']      = 1;
+      $files[$key]['list']      = variable_get('upload_list_default', 1);
     }
     
     if ($structure->type == 1) { /* multipart */
@@ -153,22 +161,22 @@ function _mmb_validate(&$node) {
           $valid = TRUE;
           if ($error['extension'] == $user_roles) {
             // form_set_error('upload', t('The selected file %name can not be attached to this post, because it is only possible to attach files with the following extensions: %files-allowed.', array('%name' => $file->filename, '%files-allowed' => $extensions)));
-            watchdog('mmb', t('The selected file %name can not be attached to this post, because it is only possible to attach files with the following extensions: %files-allowed.', array('%name' => theme('placeholder', $file->filename), '%files-allowed' => theme('placeholder', $extensions))));
+            watchdog('mmb', t('The selected file %name can not be attached to this post, because it is only possible to attach files with the following extensions: %files-allowed.', array('%name' => $file->filename, '%files-allowed' => $extensions)));
             $valid = FALSE;
           }
           elseif ($error['uploadsize'] == $user_roles) {
             // form_set_error('upload', t('The selected file %name can not be attached to this post, because it exceeded the maximum filesize of %maxsize.', array('%name' => $file->filename, '%maxsize' => format_size($uploadsize))));
-            watchdog('mmb', t('The selected file %name can not be attached to this post, because it exceeded the maximum filesize of %maxsize.', array('%name' => theme('placeholder', $file->filename), '%maxsize' => theme('placeholder', format_size($uploadsize)))));
+            watchdog('mmb', t('The selected file %name can not be attached to this post, because it exceeded the maximum filesize of %maxsize.', array('%name' => $file->filename, '%maxsize' => format_size($uploadsize))));
             $valid = FALSE;
           }
           elseif ($error['usersize'] == $user_roles) {
             // form_set_error('upload', t('The selected file %name can not be attached to this post, because the disk quota of %quota has been reached.', array('%name' => $file->filename, '%quota' => format_size($usersize))));
-            watchdog('mmb', t('The selected file %name can not be attached to this post, because the disk quota of %quota has been reached.', array('%name' => theme('placeholder', $file->filename), '%quota' => theme('placeholder', format_size($usersize)))));
+            watchdog('mmb', t('The selected file %name can not be attached to this post, because the disk quota of %quota has been reached.', array('%name' => $file->filename, '%quota' => format_size($usersize))));
             $valid = FALSE;
           }
           elseif (strlen($file->filename) > 255) {
             // form_set_error('upload', t('The selected file %name can not be attached to this post, because the filename is too long.', array('%name' => $file->filename)));
-            watchdog('mmb', t('The selected file %name can not be attached to this post, because the filename is too long.', array('%name' => theme('placeholder', $file->filename))));
+            watchdog('mmb', t('The selected file %name can not be attached to this post, because the filename is too long.', array('%name' => $file->filename)));
             $valid = FALSE;
           }
 

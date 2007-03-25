@@ -3,6 +3,11 @@
 CHANGELOG
 ---------
 
+mmb.module - March, 25th 2007
+--------------------------------------
+- Now respecting access control and upload settings
+- Watchdog messages corrected
+
 mmb.module - March, 24th 2007
 --------------------------------------
 - Drupal 5 compatibility update.
