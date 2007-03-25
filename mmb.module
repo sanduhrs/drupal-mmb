@@ -100,7 +100,7 @@ function mmb_get_parts(&$files, $stream, $msg_number, $mime_type, $structure = f
         if ($part_number) {
           $prefix = $part_number .'.';
         }
-        mmb_get_parts(&$files, $stream, $msg_number, $mime_type, $sub_structure, $prefix . ($index + 1));
+        mmb_get_parts($files, $stream, $msg_number, $mime_type, $sub_structure, $prefix . ($index + 1));
       }
     }
   }
