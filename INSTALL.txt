@@ -14,7 +14,7 @@ INSTALL
 5. Optional: Use inline.module to display attached files inline http://drupal.org/project/inline
 
 Mobile Media Blog depends on the two modules upload[1] and mailhandler[2]
-You may read the documentation related to those modules on how to set them up.
+You may read the documentation [5][6][7] related to those modules on how to set them up.
 
 Mobile Media Blog does nothing more/less, than parsing e-mails provided through mailhandler for files and attaching those files to a node via upload.module.
 
@@ -26,6 +26,9 @@ You may display images automatically inline through inline.module[3], which sadl
 [2] http://drupal.org/handbook/modules/mailhandler
 [3] http://drupal.org/project/inline
 [4] http://drupal.org/node/35709
+[5] http://drupal.org/handbook/modules/upload
+[6] http://drupal.org/node/39172
+[7] http://drupal.org/node/38943
 
 Comments and suggestions to
 Stefan Auditor <stefan.auditor@erdfisch.de>
