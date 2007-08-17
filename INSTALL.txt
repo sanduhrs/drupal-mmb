@@ -5,13 +5,17 @@ INSTALL
 
 1. Go to Administer->Modules (?q=admin/modules), and enable the upload.module
 
-2. Install and setup mailhandler.module http://drupal.org/project/mailhandler
+2. Install and setup mailhandler.module [2]
 
 3. Copy the mmb.module to the Drupal modules directory.
 
 4. Go to Administer->Modules (?q=admin/modules), and enable the mmb.module
 
-5. Optional: Use inline.module to display attached files inline http://drupal.org/project/inline
+5. Optional: Use inline.module [3] to display attached files inline
+
+6. Optional: Use image.module [8] to post image nodes
+
+7. Optional: Use audio.module [9] to post audio nodes
 
 Mobile Media Blog depends on the two modules upload[1] and mailhandler[2]
 You may read the documentation [5][6][7] related to those modules on how to set them up.
@@ -22,6 +26,8 @@ It handles all kinds of files which are allowed by upload settings.
 Files are displayed as attachments per default, you may change this by altering upload settings.
 You may display images automatically inline through inline.module[3], which sadly doesn't support other fileformats by now [4].
 
+If image.module [8] and/or audio.module [9] is installed, you may configure mailhandler to create image or audio nodes from your posts and mmb will attach the files accordingly.
+
 [1] http://drupal.org/handbook/modules/upload
 [2] http://drupal.org/handbook/modules/mailhandler
 [3] http://drupal.org/project/inline
@@ -29,6 +35,8 @@ You may display images automatically inline through inline.module[3], which sadl
 [5] http://drupal.org/handbook/modules/upload
 [6] http://drupal.org/node/39172
 [7] http://drupal.org/node/38943
+[8] http://drupal.org/project/image
+[9] http://drupal.org/project/audio
 
 Comments and suggestions to
 Stefan Auditor <stefan.auditor@erdfisch.de>

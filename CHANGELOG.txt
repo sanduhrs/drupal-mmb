@@ -3,6 +3,11 @@
 CHANGELOG
 ---------
 
+mmb.module - August, 17th 2007
+--------------------------------------
+- image.module integration
+- audio.module integration
+
 mmb.module - March, 25th 2007
 --------------------------------------
 - Now respecting access control and upload settings
