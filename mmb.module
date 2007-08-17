@@ -41,6 +41,10 @@ function mmb_mailhandler($node, $result, $i, $header, $mailbox) {
   //Handle different node types  
   switch ($node->type) {
     case 'image':
+      if (!module_exists('image')) {
+        watchdog('mmb', t('Install and setup !image to post image files.', array('!image' => l('image.module',  'http://drupal.org/project/image', array(), NULL, NULL, TRUE))), WATCHDOG_WARNING);
+        break;
+      }
       //Get the first attached image file
       foreach($node->files as $key => $file) {
         $mime = explode('/', $file['filemime']);
@@ -48,11 +52,24 @@ function mmb_mailhandler($node, $result, $i, $header, $mailbox) {
           //Prepare for image.module
           $node->images[IMAGE_ORIGINAL] = $node->files[$key]['filepath'];
           break;
-        }    
+        }
       }
       break;
     case 'audio':
-      //TODO: audio attachments
+      if (!module_exists('audio') OR !module_exists('audio_getid3')) {
+        watchdog('mmb', t('Install and setup !audio and !audio_getid3 to post audio files.', array('!audio' => l('audio.module',  'http://drupal.org/project/audio', array(), NULL, NULL, TRUE), '!audio_getid3' => l('audio_getid3.module',  'http://drupal.org/project/audio', array(), NULL, NULL, TRUE),)), WATCHDOG_WARNING);
+        break;
+      }
+      //Get the first attached audio file
+      foreach($node->files as $key => $file) {
+        $mime = explode('/', $file['filemime']);
+        if (strtolower($mime[0]) == 'audio') {
+          //Prepare for audio.module
+          $node = audio_api_insert($node->files[$key]['filepath'], $title_format = NULL, $tags = array());
+          //TODO: Check what was replaced by audio_api_insert and restore it
+          break;
+        }
+      }
       break;
     case 'video':
       //TODO: video attachments
