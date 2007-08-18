@@ -66,7 +66,8 @@ function mmb_mailhandler($node, $result, $i, $header, $mailbox) {
       }
       break;
     case 'video':
-      //TODO: video attachments
+      //TODO: video.module integration?
+      //This already works with flashvideo.module whithout modification 
       break;
   }
   

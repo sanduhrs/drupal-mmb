@@ -17,6 +17,8 @@ INSTALL
 
 7. Optional: Use audio.module [9] to post audio nodes
 
+8. Optional: Use flashvideo.module [10] to display video files
+
 Mobile Media Blog depends on the two modules upload[1] and mailhandler[2]
 You may read the documentation [5][6][7] related to those modules on how to set them up.
 
@@ -26,7 +28,7 @@ It handles all kinds of files which are allowed by upload settings.
 Files are displayed as attachments per default, you may change this by altering upload settings.
 You may display images automatically inline through inline.module[3], which sadly doesn't support other fileformats by now [4].
 
-If image.module [8] and/or audio.module [9] is installed, you may configure mailhandler to create image or audio nodes from your posts and mmb will attach the files accordingly.
+If image.module [8] and/or audio.module [9] and/or flashvideo.module [10] is installed, you may configure mailhandler to create image or audio or video nodes from your posts and mmb will attach the files accordingly.
 
 [1] http://drupal.org/handbook/modules/upload
 [2] http://drupal.org/handbook/modules/mailhandler
@@ -37,6 +39,7 @@ If image.module [8] and/or audio.module [9] is installed, you may configure mail
 [7] http://drupal.org/node/38943
 [8] http://drupal.org/project/image
 [9] http://drupal.org/project/audio
+[10] http://drupal.org/project/flashvideo
 
 Comments and suggestions to
 Stefan Auditor <stefan.auditor@erdfisch.de>
