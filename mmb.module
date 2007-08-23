@@ -45,6 +45,7 @@ function mmb_mailhandler($node, $result, $i, $header, $mailbox) {
         if (strtolower($mime[0]) == 'image') {
           //Prepare for image.module
           $node->images[IMAGE_ORIGINAL] = $node->files[$key]['filepath'];
+          _image_build_derivatives($node);
           break;
         }
       }
