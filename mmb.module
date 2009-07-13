@@ -162,22 +162,22 @@ function _mmb_validate(&$node) {
           $valid = TRUE;
           if ($error['extension'] == $user_roles) {
             // form_set_error('upload', t('The selected file %name can not be attached to this post, because it is only possible to attach files with the following extensions: %files-allowed.', array('%name' => $file->filename, '%files-allowed' => $extensions)));
-            watchdog('mmb', t('The selected file %name can not be attached to this post, because it is only possible to attach files with the following extensions: %files-allowed.', array('%name' => $file->filename, '%files-allowed' => $extensions)));
+            watchdog('mmb', 'The selected file %name can not be attached to this post, because it is only possible to attach files with the following extensions: %files-allowed.', array('%name' => $file->filename, '%files-allowed' => $extensions));
             $valid = FALSE;
           }
           elseif ($error['uploadsize'] == $user_roles) {
             // form_set_error('upload', t('The selected file %name can not be attached to this post, because it exceeded the maximum filesize of %maxsize.', array('%name' => $file->filename, '%maxsize' => format_size($uploadsize))));
-            watchdog('mmb', t('The selected file %name can not be attached to this post, because it exceeded the maximum filesize of %maxsize.', array('%name' => $file->filename, '%maxsize' => format_size($uploadsize))));
+            watchdog('mmb', 'The selected file %name can not be attached to this post, because it exceeded the maximum filesize of %maxsize.', array('%name' => $file->filename, '%maxsize' => format_size($uploadsize)));
             $valid = FALSE;
           }
           elseif ($error['usersize'] == $user_roles) {
             // form_set_error('upload', t('The selected file %name can not be attached to this post, because the disk quota of %quota has been reached.', array('%name' => $file->filename, '%quota' => format_size($usersize))));
-            watchdog('mmb', t('The selected file %name can not be attached to this post, because the disk quota of %quota has been reached.', array('%name' => $file->filename, '%quota' => format_size($usersize))));
+            watchdog('mmb', 'The selected file %name can not be attached to this post, because the disk quota of %quota has been reached.', array('%name' => $file->filename, '%quota' => format_size($usersize)));
             $valid = FALSE;
           }
           elseif (strlen($file->filename) > 255) {
             // form_set_error('upload', t('The selected file %name can not be attached to this post, because the filename is too long.', array('%name' => $file->filename)));
-            watchdog('mmb', t('The selected file %name can not be attached to this post, because the filename is too long.', array('%name' => $file->filename)));
+            watchdog('mmb', 'The selected file %name can not be attached to this post, because the filename is too long.', array('%name' => $file->filename));
             $valid = FALSE;
           }
 
