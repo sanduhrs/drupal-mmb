@@ -11,6 +11,27 @@
  */
 
 /**
+ * Implements hook_form_alter().
+ */
+function mmb_form_alter(&$form, &$form_state, $form_id) {
+  if (module_exists('filefield')) {
+    if ($form_id == 'node_type_form' && isset($form['identity']['type'])) {
+      $fields = content_fields(NULL, 'filefield');
+      $options[''] = t('None');
+      foreach ($fields as $id => $field) {
+        $options[$id] = $field['widget']['label'];
+      }
+      $form['mmb_filefield'] = array(
+        '#type' => 'select',
+        '#title' => t('mmb filefield'),
+        '#default_value' => variable_get('mmb_filefield_'. $form['#node_type']->type, ''),
+        '#options' => $options,
+      );
+    }
+  }
+}
+
+/**
  * Implementation of hook_mailhandler().
  */
 function mmb_mailhandler($node, $result, $i, $header, $mailbox) {
@@ -26,11 +47,38 @@ function mmb_mailhandler($node, $result, $i, $header, $mailbox) {
 function mmb_save_mimeparts(&$node) {
   if (is_array($node->mimeparts)) {
     foreach ($node->mimeparts as $key => $part) {
+
+      if (module_exists('transliteration')) {
+        $part->filename = transliteration_get($part->filename);
+      }
+
+      if ($filename = explode('.', $part->filename)) {
+        if (!count($filename) >= 2) {
+          $part->filename = 'noname-' . time() . '.txt';
+        }
+      }
+
       if ($file = mmb_file_save($part)) {
         $node->files[$file->fid] = $file;
+
+        $field = variable_get('mmb_filefield_'. $node->type, '');
+        if (module_exists('filefield') && $field) {
+          mmb_filefield_save($node, $file, $field);
+        }
       }
     }
   }
+}
+
+function mmb_filefield_save($node, $file, $field) {
+  $item = array(
+    'fid' => $file->fid,
+    'list' => 1,
+    'data' => array(
+      'description' => '',
+    ),
+  );
+  $node->field_image[0] = $item;
 }
 
 /**
@@ -54,15 +102,15 @@ function mmb_file_save($part) {
   $file = new stdClass();
   $file->new = TRUE;
   $file->list = 1;
-  
+  $part->filename = time() . 'jpg';
   if ($part->filename == 'unnamed_attachment') {
     $part->filename = $part->filename .'.txt';
     $file->list = 0;
   }
   
   $file->filename = truncate_utf8(file_munge_filename(trim($part->filename, '.'), $extensions, FALSE), 255);
-  $file->filepath = file_destination(file_create_path(file_directory_path() .'/'. $file->filename), FILE_EXISTS_RENAME); 
-  $file->filemime = $part->filemime;
+  $file->filepath = file_destination(file_create_path(file_directory_path() .'/'. $file->filename), FILE_EXISTS_RENAME);
+  $file->filemime = strtolower($part->filemime);
   $file->filesize = strlen($part->data);
 
   // Rename potentially executable files, to help prevent exploits.
@@ -80,6 +128,6 @@ function mmb_file_save($part) {
     drupal_write_record('files', $file);
     return $file;
   }
-  
+
   return FALSE;
 }
