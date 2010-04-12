@@ -70,7 +70,7 @@ function mmb_save_mimeparts(&$node) {
   }
 }
 
-function mmb_filefield_save($node, $file, $field) {
+function mmb_filefield_save(&$node, $file, $field) {
   $item = array(
     'fid' => $file->fid,
     'list' => 1,
@@ -78,7 +78,7 @@ function mmb_filefield_save($node, $file, $field) {
       'description' => '',
     ),
   );
-  $node->field_image[0] = $item;
+  $node->$field[0] = $item;
 }
 
 /**
